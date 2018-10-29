@@ -18,7 +18,7 @@ fn main() {
 
     let client = DigitalOcean::new(api_key).unwrap();
 
-    match Droplet::create(
+    let droplet = match Droplet::create(
         "foo-1",
         "ams3",
         "s-1vcpu-1gb",
@@ -31,34 +31,18 @@ fn main() {
             eprintln!("{:?}", e);
             process::exit(1);
         }
-        _ => {}
-    }
-
-    let droplets = match Droplet::list().execute(&client) {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("{:?}", e);
-            process::exit(1);
-        }
+        Ok(d) => d,
     };
 
-    let addrs: Vec<Ipv4Addr> = droplets
-        .iter()
-        .filter(|d| d.name().contains("foo"))
-        .flat_map(|d| d.networks().v4.iter().map(|n| n.ip_address))
-        .collect();
+    println!("{:?}", droplet);
 
-    droplets
-        .iter()
-        .filter(|d| d.name().contains("foo"))
-        .map(|d| {
-            (
-                d.id(),
-                d.name(),
-                d.networks().v4.iter().map(|n| n.ip_address),
-            )
-        })
-        .for_each(|d| println!("id: {}\nname: {}\nip: {:?}", d.0, d.1, addrs));
+    let addrs = &droplet.networks().v4[0];
+    println!(
+        "id: {}\nname: {}\nip: {:?}",
+        droplet.id(),
+        droplet.name(),
+        addrs
+    );
 
     //delete_test_droplets(&client);
 }
